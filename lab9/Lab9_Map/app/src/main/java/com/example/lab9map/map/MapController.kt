@@ -14,6 +14,7 @@ import com.yandex.mapkit.map.MapObjectTapListener
 import com.yandex.mapkit.map.PlacemarkMapObject
 import com.yandex.mapkit.map.TextStyle
 import com.yandex.runtime.image.ImageProvider
+import java.lang.ref.WeakReference
 
 // Вся работа с картой — здесь, Activity только показывает диалоги
 class MapController(
@@ -34,8 +35,8 @@ class MapController(
     // id пользовательского места -> его метка (чтобы можно было удалить)
     private val userPlacemarks = mutableMapOf<Long, PlacemarkMapObject>()
 
-    // ВАЖНО: MapKit хранит слушателей через WeakReference.
-    // Держим их в полях, иначе сборщик мусора их удалит и клики перестанут работать.
+    // ВАЖНО: MapKit 4.x принимает слушателей только как WeakReference.
+    // Сами слушатели держим в полях, иначе сборщик мусора их удалит и клики перестанут работать.
     private val placemarkTapListener = MapObjectTapListener { mapObject, _ ->
         val place = mapObject.userData as? Place ?: return@MapObjectTapListener false
         Log.d(TAG, "Клик по метке: ${place.name}")
@@ -54,8 +55,12 @@ class MapController(
         }
     }
 
+    // одна и та же ссылка нужна и для add, и для remove
+    private val placemarkTapListenerRef = WeakReference(placemarkTapListener)
+    private val inputListenerRef = WeakReference<InputListener>(inputListener)
+
     init {
-        map.addInputListener(inputListener)
+        map.addInputListener(inputListenerRef)
     }
 
     fun moveCamera(target: Point = NOVOSIBIRSK, zoom: Float = DEFAULT_ZOOM, azimuth: Float = 0f, tilt: Float = 0f) {
@@ -84,7 +89,7 @@ class MapController(
                 }
             )
             userData = place // в обработчике клика сразу получим Place
-            addTapListener(placemarkTapListener)
+            addTapListener(placemarkTapListenerRef)
         }
         if (place.isUserPlace) userPlacemarks[place.id] = placemark
     }
@@ -99,6 +104,6 @@ class MapController(
     }
 
     fun release() {
-        map.removeInputListener(inputListener)
+        map.removeInputListener(inputListenerRef)
     }
 }
