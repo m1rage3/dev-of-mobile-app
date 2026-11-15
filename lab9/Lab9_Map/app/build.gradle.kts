@@ -1,10 +1,12 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("com.google.devtools.ksp")
 }
 // API-ключ MapKit читаем из local.properties (файл не попадает в git)
-val localProps = java.util.Properties().apply {
+val localProps = Properties().apply {
     val f = rootProject.file("local.properties")
     if (f.exists()) f.inputStream().use { load(it) }
 }
@@ -16,7 +18,7 @@ android {
 
     defaultConfig {
         applicationId = "com.example.lab9map"
-        minSdk = 24
+        minSdk = 26 // MapKit 4.x требует Android 8.0+
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"
