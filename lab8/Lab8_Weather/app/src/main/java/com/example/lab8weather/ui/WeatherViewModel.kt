@@ -9,6 +9,7 @@ import com.example.lab8weather.mapping.DailyUiModel
 import com.example.lab8weather.mapping.WeatherMapper
 import com.example.lab8weather.mapping.WeatherUiModel
 import com.google.gson.JsonParseException
+import com.google.gson.stream.MalformedJsonException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -67,7 +68,10 @@ class WeatherViewModel : ViewModel() {
     }
 
     // отличаем «нет сети» от «сервер вернул что-то не то»
+    // (битый JSON Gson сообщает через MalformedJsonException — это тоже IOException,
+    // поэтому его проверяем раньше)
     private fun errorMessage(e: Throwable): String = when (e) {
+        is MalformedJsonException -> "Сервер вернул некорректные данные"
         is IOException -> "Нет подключения к интернету. Проверьте соединение."
         is HttpException -> "Сервер вернул ошибку ${e.code()}"
         is InvalidDataException, is JsonParseException, is IllegalStateException ->
